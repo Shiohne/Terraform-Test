@@ -132,17 +132,98 @@ resource "azurerm_nat_gateway" "natgw" {
   sku_name            = "Standard"
 }
 
-resource "azurerm_nat_gateway_public_ip_association" "pubip-nat-association" {
+resource "azurerm_nat_gateway_public_ip_association" "pubip_nat_association" {
   nat_gateway_id       = azurerm_nat_gateway.natgw.id
   public_ip_address_id = azurerm_public_ip.pub_ip.id
 }
 
-resource "azurerm_subnet_nat_gateway_association" "sub1-nat-association" {
+resource "azurerm_subnet_nat_gateway_association" "sub1_nat_association" {
   subnet_id      = azurerm_subnet.sub1.id
   nat_gateway_id = azurerm_nat_gateway.natgw.id
 }
 
-resource "azurerm_subnet_nat_gateway_association" "sub2-nat-association" {
+resource "azurerm_subnet_nat_gateway_association" "sub2_nat_association" {
   subnet_id      = azurerm_subnet.sub2.id
   nat_gateway_id = azurerm_nat_gateway.natgw.id
+}
+
+resource "azurerm_public_ip" "bastion_pub_ip" {
+  name                = "${var.company_initials}-bastion-pubip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-vms.name
+  allocation_method   = "Static"
+}
+
+resource "azurerm_network_interface" "bastion_nic" {
+  name                = "${var.company_initials}-bastion-nic"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-vms.name
+
+  ip_configuration {
+    name                          = "${var.company_initials}-ipconfig"
+    subnet_id                     = azurerm_subnet.sub3.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.bastion_pub_ip.id
+  }
+}
+
+resource "azurerm_windows_virtual_machine" "bastion" {
+  name                     = "${var.company_initials}-bastion"
+  location                 = var.location
+  admin_username           = "terraform-admin"
+  admin_password           = var.password
+  resource_group_name      = azurerm_resource_group.rg-vms.name
+  network_interface_ids    = [azurerm_network_interface.bastion_nic.id]
+  size                     = "Standard_B2s"
+  enable_automatic_updates = true
+
+  os_disk {
+    name                 = "${var.company_initials}-bastion-disk"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2022-datacenter-azure-edition"
+    version   = "latest"
+  }
+}
+
+resource "azurerm_network_interface" "dc_nic" {
+  name                = "${var.company_initials}-dc-nic"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-vms.name
+
+  ip_configuration {
+    name                          = "${var.company_initials}-ipconfig"
+    subnet_id                     = azurerm_subnet.sub1.id
+    private_ip_address_allocation = "Static"
+    private_ip_address            = "172.16.1.10"
+  }
+}
+
+resource "azurerm_windows_virtual_machine" "dc" {
+  name                     = "${var.company_initials}-dc"
+  location                 = var.location
+  admin_username           = "terraform-admin"
+  admin_password           = var.password
+  resource_group_name      = azurerm_resource_group.rg-vms.name
+  network_interface_ids    = [azurerm_network_interface.dc_nic.id]
+  size                     = "Standard_B2s"
+  enable_automatic_updates = true
+
+  os_disk {
+    name                 = "${var.company_initials}-dc-disk"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2022-datacenter-azure-edition"
+    version   = "latest"
+  }
 }
