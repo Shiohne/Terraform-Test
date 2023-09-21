@@ -42,30 +42,30 @@ resource "azurerm_virtual_network" "vnet" {
 }
 
 resource "azurerm_subnet" "sub1" {
-  name                 = "${var.company_initials}-sub-01"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["172.16.1.0/24"]
+  name                                           = "${var.company_initials}-sub-01"
+  resource_group_name                            = azurerm_resource_group.rg.name
+  virtual_network_name                           = azurerm_virtual_network.vnet.name
+  address_prefixes                               = ["172.16.1.0/24"]
   enforce_private_link_endpoint_network_policies = false
-  enforce_private_link_service_network_policies = false
+  enforce_private_link_service_network_policies  = false
 }
 
 resource "azurerm_subnet" "sub2" {
-  name                 = "${var.company_initials}-sub-02"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["172.16.2.0/24"]
+  name                                           = "${var.company_initials}-sub-02"
+  resource_group_name                            = azurerm_resource_group.rg.name
+  virtual_network_name                           = azurerm_virtual_network.vnet.name
+  address_prefixes                               = ["172.16.2.0/24"]
   enforce_private_link_endpoint_network_policies = false
-  enforce_private_link_service_network_policies = false
+  enforce_private_link_service_network_policies  = false
 }
 
 resource "azurerm_subnet" "sub3" {
-  name                 = "${var.company_initials}-sub-03"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["172.16.3.0/24"]
+  name                                           = "${var.company_initials}-sub-03"
+  resource_group_name                            = azurerm_resource_group.rg.name
+  virtual_network_name                           = azurerm_virtual_network.vnet.name
+  address_prefixes                               = ["172.16.3.0/24"]
   enforce_private_link_endpoint_network_policies = false
-  enforce_private_link_service_network_policies = false
+  enforce_private_link_service_network_policies  = false
 }
 
 resource "azurerm_network_security_group" "nsg_priv" {
@@ -115,4 +115,34 @@ resource "azurerm_network_security_rule" "rdp" {
 resource "azurerm_subnet_network_security_group_association" "nsg_pub_sub3" {
   subnet_id                 = azurerm_subnet.sub3.id
   network_security_group_id = azurerm_network_security_group.nsg_pub.id
+}
+
+resource "azurerm_public_ip" "pub_ip" {
+  name                = "${var.company_initials}-natgw-pubip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+resource "azurerm_nat_gateway" "natgw" {
+  name                = "${var.company_initials}-natgw"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku_name            = "Standard"
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "pubip-nat-association" {
+  nat_gateway_id       = azurerm_nat_gateway.natgw.id
+  public_ip_address_id = azurerm_public_ip.pub_ip.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "sub1-nat-association" {
+  subnet_id      = azurerm_subnet.sub1.id
+  nat_gateway_id = azurerm_nat_gateway.natgw.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "sub2-nat-association" {
+  subnet_id      = azurerm_subnet.sub2.id
+  nat_gateway_id = azurerm_nat_gateway.natgw.id
 }
