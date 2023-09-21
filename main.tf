@@ -18,7 +18,7 @@ resource "azurerm_resource_group" "rg" {
   name     = "${var.company_initials}-rg-prod"
   location = var.location
   tags = {
-    Team = "Cloud Integration"
+    Team = "Cloud"
   }
 }
 
@@ -26,7 +26,7 @@ resource "azurerm_resource_group" "rg-vms" {
   name     = "${var.company_initials}-rg-prod-vms"
   location = var.location
   tags = {
-    Team = "Cloud Integration"
+    Team = "Cloud"
   }
 }
 
@@ -36,7 +36,7 @@ resource "azurerm_virtual_network" "vnet" {
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
   tags = {
-    Team = "Cloud Integration"
+    Team = "Cloud"
   }
 
 }
@@ -73,7 +73,7 @@ resource "azurerm_network_security_group" "nsg_priv" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   tags = {
-    Team = "Cloud Integration"
+    Team = "Cloud"
   }
 }
 
@@ -93,7 +93,7 @@ resource "azurerm_network_security_group" "nsg_pub" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   tags = {
-    Team = "Cloud Integration"
+    Team = "Cloud"
   }
 }
 
@@ -109,7 +109,6 @@ resource "azurerm_network_security_rule" "rdp" {
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.nsg_pub.name
-
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg_pub_sub3" {
@@ -123,6 +122,10 @@ resource "azurerm_public_ip" "pub_ip" {
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
+
+  tags = {
+    Team = "Cloud"
+  }
 }
 
 resource "azurerm_nat_gateway" "natgw" {
@@ -130,6 +133,10 @@ resource "azurerm_nat_gateway" "natgw" {
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
   sku_name            = "Standard"
+
+  tags = {
+    Team = "Cloud"
+  }
 }
 
 resource "azurerm_nat_gateway_public_ip_association" "pubip_nat_association" {
@@ -152,6 +159,10 @@ resource "azurerm_public_ip" "bastion_pub_ip" {
   location            = var.location
   resource_group_name = azurerm_resource_group.rg-vms.name
   allocation_method   = "Static"
+
+  tags = {
+    Team = "Cloud"
+  }
 }
 
 resource "azurerm_network_interface" "bastion_nic" {
@@ -164,6 +175,10 @@ resource "azurerm_network_interface" "bastion_nic" {
     subnet_id                     = azurerm_subnet.sub3.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.bastion_pub_ip.id
+  }
+
+  tags = {
+    Team = "Cloud"
   }
 }
 
@@ -189,6 +204,10 @@ resource "azurerm_windows_virtual_machine" "bastion" {
     sku       = "2022-datacenter-azure-edition"
     version   = "latest"
   }
+
+  tags = {
+    Team = "Cloud"
+  }
 }
 
 resource "azurerm_network_interface" "dc_nic" {
@@ -201,6 +220,10 @@ resource "azurerm_network_interface" "dc_nic" {
     subnet_id                     = azurerm_subnet.sub1.id
     private_ip_address_allocation = "Static"
     private_ip_address            = "172.16.1.10"
+  }
+
+  tags = {
+    Team = "Cloud"
   }
 }
 
@@ -225,5 +248,9 @@ resource "azurerm_windows_virtual_machine" "dc" {
     offer     = "WindowsServer"
     sku       = "2022-datacenter-azure-edition"
     version   = "latest"
+  }
+
+  tags = {
+    Team = "Cloud"
   }
 }

@@ -1,4 +1,4 @@
 output "admin_password" {
-  sensitive = true 
+  sensitive = true
   value     = azurerm_windows_virtual_machine.bastion.admin_password
 }
